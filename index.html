@@ -3,96 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Refinement Scorer</title>
+    <title>Planning Poker Cards</title>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: #2c2c2c;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .container {
-            padding: 40px;
-            background-color: #383838;
+        body { font-family: sans-serif; background-color: #2c2c2c; color: #e0e0e0; text-align: center; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        h1, h2 { font-weight: 300; }
+        .card-deck { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 30px 0; }
+        .card {
+            width: 100px;
+            height: 140px;
+            border: 2px solid #555;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        h1 {
-            margin-top: 0;
-        }
-        #total-score {
-            font-size: 4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
             font-weight: bold;
-            color: #4CAF50;
-            margin: 20px 0;
-        }
-        .points-buttons button, .control-buttons button {
-            font-size: 1.5em;
-            padding: 15px 25px;
-            margin: 5px;
             cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #007BFF;
-            color: white;
-            transition: background-color 0.2s;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
         }
-        .points-buttons button:hover {
-            background-color: #0056b3;
-        }
-        .control-buttons button {
-            background-color: #dc3545;
-        }
-        .control-buttons button:hover {
-            background-color: #a71d2a;
+        .card:hover { transform: translateY(-5px); }
+        .card.selected { border-color: #007BFF; background-color: #334; }
+        .reveal-area button { font-size: 1.5em; padding: 15px 30px; border-radius: 5px; border: none; cursor: pointer; }
+        #reveal-button { background-color: #28a745; color: white; }
+        #reset-button { background-color: #6c757d; color: white; }
+        #your-vote {
+            font-size: 6em;
+            height: 150px;
+            line-height: 150px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Refinement Points</h1>
-    <div id="total-score">0</div>
-    <div class="points-buttons">
-        <p>Click points to add them to the total:</p>
-        <button onclick="addPoints(1)">1</button>
-        <button onclick="addPoints(2)">2</button>
-        <button onclick="addPoints(3)">3</button>
-        <button onclick="addPoints(5)">5</button>
-        <button onclick="addPoints(8)">8</button>
-        <button onclick="addPoints(13)">13</button>
+    <h1>Planning Poker</h1>
+    <h2 id="instruction">Select your card</h2>
+
+    <div id="vote-result" style="display: none;">
+        <h2>Your vote:</h2>
+        <div id="your-vote"></div>
     </div>
-    <hr style="margin: 20px 0;">
-    <div class="control-buttons">
-        <button onclick="resetScore()">Reset</button>
+
+    <div class="card-deck" id="card-deck">
+        <div class="card" data-value="1">1</div>
+        <div class="card" data-value="2">2</div>
+        <div class="card" data-value="3">3</div>
+        <div class="card" data-value="5">5</div>
+        <div class="card" data-value="8">8</div>
+        <div class="card" data-value="13">13</div>
+    </div>
+
+    <div class="reveal-area">
+        <button id="reveal-button" disabled>Reveal My Card</button>
+        <button id="reset-button" style="display: none;">Reset</button>
     </div>
 </div>
 
 <script>
-    const scoreDisplay = document.getElementById('total-score');
-    let currentTotal = 0;
+    const cards = document.querySelectorAll('.card');
+    const revealBtn = document.getElementById('reveal-button');
+    const resetBtn = document.getElementById('reset-button');
+    const cardDeck = document.getElementById('card-deck');
+    const instruction = document.getElementById('instruction');
+    const voteResult = document.getElementById('vote-result');
+    const yourVote = document.getElementById('your-vote');
+    
+    let selectedCard = null;
 
-    // Function to add points to the current total
-    function addPoints(points) {
-        currentTotal += points;
-        updateScore();
-    }
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            if (selectedCard) {
+                selectedCard.classList.remove('selected');
+            }
+            selectedCard = card;
+            selectedCard.classList.add('selected');
+            revealBtn.disabled = false;
+            instruction.textContent = "Card selected. Ready to reveal.";
+        });
+    });
 
-    // Function to reset the score to zero
-    function resetScore() {
-        currentTotal = 0;
-        updateScore();
-    }
+    revealBtn.addEventListener('click', () => {
+        if (!selectedCard) return;
 
-    // Function to update the display
-    function updateScore() {
-        scoreDisplay.textContent = currentTotal;
-    }
+        const value = selectedCard.dataset.value;
+        yourVote.textContent = value;
+        
+        cardDeck.style.display = 'none';
+        revealBtn.style.display = 'none';
+        instruction.style.display = 'none';
+
+        voteResult.style.display = 'block';
+        resetBtn.style.display = 'inline-block';
+    });
+
+    resetBtn.addEventListener('click', () => {
+        if (selectedCard) {
+            selectedCard.classList.remove('selected');
+            selectedCard = null;
+        }
+
+        voteResult.style.display = 'none';
+        resetBtn.style.display = 'none';
+        
+        cardDeck.style.display = 'flex';
+        revealBtn.style.display = 'inline-block';
+        revealBtn.disabled = true;
+        instruction.style.display = 'block';
+        instruction.textContent = "Select your card";
+    });
 </script>
 
 </body>
